@@ -9,21 +9,21 @@ import os
 load_dotenv()
 
 
-def enviar_emails(remetente, destinatario, assunto, corpo, anexo):
+def enviar_emails(remetente, destinatario, assunto, corpo, anexo, senha):
     # Configurações do servidor SMTP do Gmail
     smtp_server = "smtp.gmail.com"
     smtp_port = 587
     
-    # Crie o objeto da mensagem
+
     msg = MIMEMultipart()
     msg['From'] = remetente
     msg['To'] = destinatario
     msg['Subject'] = assunto
     
-    # Anexe o corpo do e-mail
+    
     msg.attach(MIMEText(corpo, 'plain'))
     
-    # Anexe o arquivo Excel
+    
     try:
         with open(anexo, "rb") as attachment:
             part = MIMEBase("application", "octet-stream")
@@ -36,11 +36,11 @@ def enviar_emails(remetente, destinatario, assunto, corpo, anexo):
         print(f"Erro: O arquivo {anexo} não foi encontrado.\n")
         return
     
-    # Conecte-se e envie o e-mail
+    
     try:
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
-        server.login(remetente, os.getenv("SENHA"))  # Use sua senha de app
+        server.login(remetente, senha)  
         server.send_message(msg)
         server.quit()
         print("\n✅ E-mail enviado com sucesso!\n")
