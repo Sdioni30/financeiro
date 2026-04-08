@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# === Configurações Personalizadas do Dioni ===
+
+# Ignora o arquivo de configuração real com senhas
+src/main/resources/application.yml
+
+# Ignora arquivos de ambiente (caso você crie algum)
+.env
+
+# Ignora arquivos de backup ou temporários
+*.swp
+*.bak
