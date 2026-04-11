@@ -19,10 +19,11 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven
 
       - name: Rodar testes automáticos
-        run: ./mvnw clean test
+        working-directory: ./financeiro
+        run: mvn clean test
 
       - name: Gerar o Build
-        run: ./mvnw -B package -DskipTests
+        working-directory: ./financeiro
+        run: mvn -B package -DskipTestsests
