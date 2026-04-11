@@ -2,6 +2,7 @@ package com.dioni.financeiro.base.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+
 import java.time.LocalDate;
 
 @Entity
@@ -13,6 +14,7 @@ public class Transacao {
     private Long id;
 
     private String descricao;
+
     private Double valor;
 
     @Enumerated(EnumType.STRING)
