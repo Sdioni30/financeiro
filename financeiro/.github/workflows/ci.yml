@@ -22,7 +22,7 @@ jobs:
           cache: maven
 
       - name: Rodar testes automáticos
-        run: mvn clean test
+        run: ./mvnw clean test
 
       - name: Gerar o Build
-        run: mvn -B package -DskipTests
+        run: ./mvnw -B package -DskipTests
