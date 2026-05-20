@@ -1,4 +1,4 @@
-package com.dioni.financeiro.base.model;
+package com.dioni.financeiro.base.enums;
 
 public enum Categoria {
     PESSOAL, PROFISSIONAL
