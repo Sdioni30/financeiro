@@ -1,6 +1,6 @@
 package com.dioni.financeiro.base.web;
 
-import com.dioni.financeiro.base.model.Categoria;
+import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.repository.CalcularSaldoCommand;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
