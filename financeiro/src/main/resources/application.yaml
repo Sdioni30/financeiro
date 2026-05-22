@@ -1,4 +1,7 @@
 spring:
+  profiles:
+    active: local
+
   datasource:
 
     url: ${DB_URL:jdbc:mysql://localhost:3306/db_financeiro}
@@ -13,3 +16,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:7200000}

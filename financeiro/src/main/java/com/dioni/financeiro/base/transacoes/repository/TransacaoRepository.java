@@ -1,6 +1,6 @@
-package com.dioni.financeiro.base.repository;
+package com.dioni.financeiro.base.transacoes.repository;
 
-import com.dioni.financeiro.base.model.Transacao;
+import com.dioni.financeiro.base.transacoes.model.Transacao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

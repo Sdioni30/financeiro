@@ -34,8 +34,9 @@ build/
 
 # === Configurações Personalizadas do Dioni ===
 
-# Ignora o arquivo de configuração real com senhas
+# Ignora arquivos de configuração com senhas reais (use application.yaml com variáveis de ambiente)
 src/main/resources/application.yml
+src/main/resources/application-local.yaml
 
 # Ignora arquivos de ambiente (caso você crie algum)
 .env

@@ -1,10 +1,10 @@
 package com.dioni.financeiro.base;
 
-import com.dioni.financeiro.base.model.Categoria;
-import com.dioni.financeiro.base.model.TipoTransacao;
-import com.dioni.financeiro.base.model.Transacao;
-import com.dioni.financeiro.base.repository.CalcularSaldoCommand;
-import com.dioni.financeiro.base.repository.TransacaoRepository;
+import com.dioni.financeiro.base.enums.Categoria;
+import com.dioni.financeiro.base.enums.TipoTransacao;
+import com.dioni.financeiro.base.transacoes.model.Transacao;
+import com.dioni.financeiro.base.transacoes.repository.CalcularSaldoCommand;
+import com.dioni.financeiro.base.transacoes.repository.TransacaoRepository;
 import com.dioni.financeiro.support.TestSupport;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;

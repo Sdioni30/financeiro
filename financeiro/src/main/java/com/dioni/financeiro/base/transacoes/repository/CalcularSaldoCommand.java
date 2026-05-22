@@ -1,8 +1,8 @@
-package com.dioni.financeiro.base.repository;
+package com.dioni.financeiro.base.transacoes.repository;
 
-import com.dioni.financeiro.base.model.Categoria;
-import com.dioni.financeiro.base.model.TipoTransacao;
-import com.dioni.financeiro.base.model.Transacao;
+import com.dioni.financeiro.base.enums.Categoria;
+import com.dioni.financeiro.base.enums.TipoTransacao;
+import com.dioni.financeiro.base.transacoes.model.Transacao;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
