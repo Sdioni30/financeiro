@@ -3,7 +3,7 @@ package com.dioni.financeiro.base.transacoes.web;
 import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.transacoes.repository.CalcularSaldoCommand;
 import com.dioni.financeiro.base.transacoes.repository.DeletarTransacaoCommand;
-import com.dioni.financeiro.base.repository.ExportarRelatorioCommand;
+import com.dioni.financeiro.base.transacoes.repository.ExportarRelatorioCommand;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
