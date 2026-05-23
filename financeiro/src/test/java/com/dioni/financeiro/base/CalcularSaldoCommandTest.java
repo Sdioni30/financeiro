@@ -1,18 +1,24 @@
 package com.dioni.financeiro.base;
 
+import com.dioni.financeiro.base.auth.model.Usuario;
 import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.enums.TipoTransacao;
 import com.dioni.financeiro.base.transacoes.model.Transacao;
 import com.dioni.financeiro.base.transacoes.repository.CalcularSaldoCommand;
+import com.dioni.financeiro.base.transacoes.repository.TransacaoQuery;
 import com.dioni.financeiro.base.transacoes.repository.TransacaoRepository;
 import com.dioni.financeiro.support.TestSupport;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 class CalcularSaldoCommandTest extends TestSupport {
@@ -20,11 +26,25 @@ class CalcularSaldoCommandTest extends TestSupport {
     @Mock
     private TransacaoRepository transacaoRepository;
 
+    @Mock
+    private TransacaoQuery transacaoQuery;
+
     private CalcularSaldoCommand calcularSaldoCommand;
 
     @Override
     public void init() {
-        calcularSaldoCommand = new CalcularSaldoCommand(transacaoRepository);
+        calcularSaldoCommand = new CalcularSaldoCommand(transacaoRepository, transacaoQuery);
+
+        Usuario usuario = new Usuario();
+        usuario.setModoMensal(false);
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(usuario);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
     }
 
     @Test
@@ -63,7 +83,6 @@ class CalcularSaldoCommandTest extends TestSupport {
     void should_return_zero_when_no_transactions_found_for_category() {
         Categoria categoriaAlvo = Categoria.PESSOAL;
 
-
         when(transacaoRepository.findAll()).thenReturn(List.of());
 
         Double saldoResult = calcularSaldoCommand.executar(categoriaAlvo);
@@ -72,6 +91,43 @@ class CalcularSaldoCommandTest extends TestSupport {
 
         InOrder inOrder = this.inOrder(transacaoRepository);
         inOrder.verify(transacaoRepository).findAll();
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
+    void should_calculate_balance_only_for_current_month_when_modo_mensal_is_enabled() {
+        Usuario usuarioMensal = new Usuario();
+        usuarioMensal.setModoMensal(true);
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(usuarioMensal);
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+
+        int mes = java.time.LocalDate.now().getMonthValue();
+        int ano = java.time.LocalDate.now().getYear();
+
+        Transacao t1 = new Transacao();
+        t1.setCategoria(Categoria.PROFISSIONAL);
+        t1.setTipo(TipoTransacao.ENTRADA);
+        t1.setValor(400.0);
+
+        Transacao t2 = new Transacao();
+        t2.setCategoria(Categoria.PROFISSIONAL);
+        t2.setTipo(TipoTransacao.SAIDA);
+        t2.setValor(100.0);
+
+        when(transacaoQuery.filtrarPorMes(mes, ano)).thenReturn(List.of(t1, t2));
+
+        Double saldoResult = calcularSaldoCommand.executar(Categoria.PROFISSIONAL);
+
+        assertThat(saldoResult).isEqualTo(300.0);
+
+        InOrder inOrder = this.inOrder(transacaoQuery);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano);
         inOrder.verifyNoMoreInteractions();
     }
 }
