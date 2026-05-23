@@ -1,10 +1,14 @@
 package com.dioni.financeiro.base.transacoes.web;
 
 import com.dioni.financeiro.base.enums.Categoria;
+import com.dioni.financeiro.base.transacoes.application.usecase.ListarTransacoesUseCase;
 import com.dioni.financeiro.base.transacoes.repository.CalcularSaldoCommand;
 import com.dioni.financeiro.base.transacoes.repository.DeletarTransacaoCommand;
 import com.dioni.financeiro.base.transacoes.repository.ExportarRelatorioCommand;
 import lombok.AllArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +17,6 @@ import com.dioni.financeiro.base.transacoes.repository.TransacaoRepository;
 import com.dioni.financeiro.base.transacoes.model.Transacao;
 
 import java.time.LocalDate;
-import java.util.List;
 
 
 @AllArgsConstructor
@@ -25,6 +28,7 @@ public class TransacaoController {
     private final ExportarRelatorioCommand exportarRelatorioCommand;
     private final TransacaoRepository repository;
     private final DeletarTransacaoCommand deletarTransacaoCommand;
+    private final ListarTransacoesUseCase listarTransacoesUseCase;
 
     @PostMapping
     public Transacao criar(@RequestBody Transacao transacao) {
@@ -33,8 +37,9 @@ public class TransacaoController {
     }
 
     @GetMapping("/listar")
-    public List<Transacao> listarTodas() {
-        return repository.findAll();
+    public ResponseEntity<Page<Transacao>> listarTodas(@RequestParam(defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, 10);
+        return ResponseEntity.ok(listarTransacoesUseCase.execute(pageable));
     }
 
     @GetMapping("/saldo/{categoria}")
@@ -59,5 +64,4 @@ public class TransacaoController {
     public ResponseEntity<Void> deletar(@PathVariable Long id) {
         return deletarTransacaoCommand.executar(id);
     }
-
 }
