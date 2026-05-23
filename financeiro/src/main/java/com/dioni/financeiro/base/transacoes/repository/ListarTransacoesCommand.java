@@ -1,8 +1,7 @@
-package com.dioni.financeiro.base.transacoes.application.usecase;
+package com.dioni.financeiro.base.transacoes.repository;
 
 import com.dioni.financeiro.base.auth.model.Usuario;
 import com.dioni.financeiro.base.transacoes.model.Transacao;
-import com.dioni.financeiro.base.transacoes.repository.TransacaoRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,12 +12,11 @@ import java.time.LocalDate;
 
 @Service
 @AllArgsConstructor
-public class ListarTransacoesUseCaseImpl implements ListarTransacoesUseCase {
+public class ListarTransacoesCommand {
 
     private final TransacaoRepository transacaoRepository;
 
-    @Override
-    public Page<Transacao> execute(Pageable pageable) {
+    public Page<Transacao> executar(Pageable pageable) {
         Usuario usuario = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         if (usuario.isModoMensal()) {
