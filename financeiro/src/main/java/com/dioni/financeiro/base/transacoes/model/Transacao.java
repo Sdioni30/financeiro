@@ -1,8 +1,8 @@
-package com.dioni.financeiro.base.model;
+package com.dioni.financeiro.base.transacoes.model;
 
+import com.dioni.financeiro.base.auth.model.Usuario;
 import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.enums.TipoTransacao;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -27,5 +27,10 @@ public class Transacao {
     private Categoria categoria;
 
     private LocalDate data;
-}
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id", nullable = false)
+    private Usuario usuario;
+
+
+}

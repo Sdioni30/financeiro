@@ -1,3 +1,3 @@
 package com.dioni.financeiro.base.auth.dto;
 
-public record LoginResponse(String token) {}
+public record LoginResponse(String token, boolean modoMensal) {}

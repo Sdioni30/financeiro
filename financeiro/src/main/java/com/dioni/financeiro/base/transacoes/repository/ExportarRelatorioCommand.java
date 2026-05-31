@@ -1,0 +1,85 @@
+package com.dioni.financeiro.base.transacoes.repository;
+
+import com.dioni.financeiro.base.auth.model.Usuario;
+import com.dioni.financeiro.base.enums.Categoria;
+import com.dioni.financeiro.base.enums.TipoTransacao;
+import com.dioni.financeiro.base.transacoes.model.Transacao;
+import lombok.AllArgsConstructor;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.time.LocalDate;
+import java.util.List;
+
+@Service
+@AllArgsConstructor
+public class ExportarRelatorioCommand {
+
+    private static final MediaType XLSX = MediaType.parseMediaType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
+    private final TransacaoQuery transacaoQuery;
+
+    public ResponseEntity<byte[]> executar(Categoria categoria, TipoTransacao tipo) {
+        Usuario usuario = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
+        List<Transacao> transacoes = transacaoQuery.filtrarPorMes(mes, ano, usuario.getId()).stream()
+                .filter(t -> t.getCategoria().equals(categoria))
+                .filter(t -> tipo == null || t.getTipo().equals(tipo))
+                .toList();
+
+        try (Workbook workbook = new XSSFWorkbook();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+
+            Sheet sheet = workbook.createSheet("Relatorio");
+            Row header = sheet.createRow(0);
+            header.createCell(0).setCellValue("Data");
+            header.createCell(1).setCellValue("Tipo");
+            header.createCell(2).setCellValue("Valor");
+
+            int rowIdx = 1;
+            for (Transacao t : transacoes) {
+                Row row = sheet.createRow(rowIdx++);
+                row.createCell(0).setCellValue(t.getData().toString());
+                row.createCell(1).setCellValue(t.getTipo().toString());
+                row.createCell(2).setCellValue(t.getValor());
+            }
+
+            double saldo = transacoes.stream()
+                    .mapToDouble(t -> t.getTipo().name().equals("ENTRADA") ? t.getValor() : -t.getValor())
+                    .sum();
+
+            sheet.createRow(rowIdx);
+            Row saldoRow = sheet.createRow(rowIdx + 1);
+            saldoRow.createCell(1).setCellValue("Saldo");
+            saldoRow.createCell(2).setCellValue(saldo);
+
+            workbook.write(out);
+
+            String nomeArquivo = escolherNomeArquivo(categoria, tipo);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(XLSX);
+            headers.setContentDispositionFormData("attachment", nomeArquivo);
+
+            return ResponseEntity.ok().headers(headers).body(out.toByteArray());
+
+        } catch (IOException e) {
+            throw new RuntimeException("Erro", e);
+        }
+    }
+
+    private String escolherNomeArquivo(Categoria categoria, TipoTransacao tipo) {
+        if (tipo == TipoTransacao.ENTRADA) return "entradas_" + categoria + ".xlsx";
+        if (tipo == TipoTransacao.SAIDA)   return "saidas_" + categoria + ".xlsx";
+        return "relatorio_" + categoria + ".xlsx";
+    }
+}

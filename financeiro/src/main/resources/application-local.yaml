@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/db_financeiro
+    username: root
+    password: GrpIcr#2740@@
+
+jwt:
+  secret: local-dev-chave-secreta-minimo-32-chars!!
+  expiration: 7200000
