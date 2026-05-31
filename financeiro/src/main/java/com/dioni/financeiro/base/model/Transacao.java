@@ -2,6 +2,7 @@ package com.dioni.financeiro.base.model;
 
 import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.enums.TipoTransacao;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 

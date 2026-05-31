@@ -2,8 +2,10 @@ package com.dioni.financeiro.base.web;
 
 import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.repository.CalcularSaldoCommand;
+import com.dioni.financeiro.base.repository.ExportarRelatorioCommand;
 import lombok.AllArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.dioni.financeiro.base.repository.TransacaoRepository;
@@ -19,16 +21,18 @@ import java.util.List;
 public class TransacaoController {
 
     private final CalcularSaldoCommand calcularSaldoCommand;
-
+    private final ExportarRelatorioCommand exportarRelatorioCommand;
     private final TransacaoRepository repository;
 
     @PostMapping
-    public Transacao criar(@RequestBody Transacao transacao) {
+    public TransacaoDTO criar(@RequestBody TransacaoRequest transacaoRequest) {
+        Transacao transacao = transacaoRequest.toTransacao();
         transacao.setData(LocalDate.now());
-        return repository.save(transacao);
+        Transacao saveTransaction = repository.save(transacao);
+        return TransacaoDTO.from(saveTransaction);
     }
 
-    @GetMapping
+    @GetMapping("/listar")
     public List<Transacao> listarTodas() {
         return repository.findAll();
     }
@@ -37,5 +41,19 @@ public class TransacaoController {
     public ResponseEntity<Double> obterSaldo(@PathVariable Categoria categoria) {
         return ResponseEntity.ok(calcularSaldoCommand.executar(categoria));
     }
+
+    @GetMapping("/download/relatorio/{categoria}")
+    public ResponseEntity<byte[]> baixarRelatorio(@PathVariable Categoria categoria) {
+        byte[] relatorio = exportarRelatorioCommand.executar(categoria);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
+        headers.setContentDispositionFormData("attachment", "relatorio_" + categoria + ".xlsx");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(relatorio);
+    }
+
 
 }
