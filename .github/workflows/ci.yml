@@ -27,3 +27,29 @@ jobs:
       - name: Gerar o Build
         working-directory: ./financeiro
         run: mvn -B package -DskipTests
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Login no GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build e Push da imagem Docker
+        uses: docker/build-push-action@v5
+        with:
+          context: ./financeiro
+          push: true
+          tags: ghcr.io/${{ github.repository_owner }}/financeiro-backend:latest
