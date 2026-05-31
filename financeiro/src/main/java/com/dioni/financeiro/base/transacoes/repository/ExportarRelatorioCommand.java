@@ -2,10 +2,14 @@ package com.dioni.financeiro.base.transacoes.repository;
 
 import com.dioni.financeiro.base.auth.model.Usuario;
 import com.dioni.financeiro.base.enums.Categoria;
+import com.dioni.financeiro.base.enums.TipoTransacao;
 import com.dioni.financeiro.base.transacoes.model.Transacao;
 import lombok.AllArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -18,10 +22,13 @@ import java.util.List;
 @AllArgsConstructor
 public class ExportarRelatorioCommand {
 
+    private static final MediaType XLSX = MediaType.parseMediaType(
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+
     private final TransacaoRepository repository;
     private final TransacaoQuery transacaoQuery;
 
-    public byte[] executar(Categoria categoria) {
+    public ResponseEntity<byte[]> executar(Categoria categoria, TipoTransacao tipo) {
         Usuario usuario = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
         List<Transacao> transacoes;
@@ -30,10 +37,12 @@ public class ExportarRelatorioCommand {
             int ano = LocalDate.now().getYear();
             transacoes = transacaoQuery.filtrarPorMes(mes, ano).stream()
                     .filter(t -> t.getCategoria().equals(categoria))
+                    .filter(t -> tipo == null || t.getTipo().equals(tipo))
                     .toList();
         } else {
             transacoes = repository.findAll().stream()
                     .filter(t -> t.getCategoria().equals(categoria))
+                    .filter(t -> tipo == null || t.getTipo().equals(tipo))
                     .toList();
         }
 
@@ -64,10 +73,22 @@ public class ExportarRelatorioCommand {
             saldoRow.createCell(2).setCellValue(saldo);
 
             workbook.write(out);
-            return out.toByteArray();
+
+            String nomeArquivo = escolherNomeArquivo(categoria, tipo);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(XLSX);
+            headers.setContentDispositionFormData("attachment", nomeArquivo);
+
+            return ResponseEntity.ok().headers(headers).body(out.toByteArray());
 
         } catch (IOException e) {
             throw new RuntimeException("Erro", e);
         }
+    }
+
+    private String escolherNomeArquivo(Categoria categoria, TipoTransacao tipo) {
+        if (tipo == TipoTransacao.ENTRADA) return "entradas_" + categoria + ".xlsx";
+        if (tipo == TipoTransacao.SAIDA)   return "saidas_" + categoria + ".xlsx";
+        return "relatorio_" + categoria + ".xlsx";
     }
 }

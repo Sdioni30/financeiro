@@ -15,6 +15,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -72,9 +75,10 @@ class ExportarRelatorioCommandTest extends TestSupport {
 
         when(repository.findAll()).thenReturn(transacoes);
 
-        byte[] resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL);
+        ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, null);
 
-        assertThat(resultado).isNotEmpty();
+        assertThat(resultado.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(repository);
         inOrder.verify(repository).findAll();
@@ -95,9 +99,10 @@ class ExportarRelatorioCommandTest extends TestSupport {
 
         when(transacaoQuery.filtrarPorMes(mes, ano)).thenReturn(transacoes);
 
-        byte[] resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL);
+        ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, null);
 
-        assertThat(resultado).isNotEmpty();
+        assertThat(resultado.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(transacaoQuery);
         inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano);
@@ -110,12 +115,79 @@ class ExportarRelatorioCommandTest extends TestSupport {
 
         when(repository.findAll()).thenReturn(List.of());
 
-        byte[] resultado = exportarRelatorioCommand.executar(Categoria.PROFISSIONAL);
+        ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PROFISSIONAL, null);
 
-        assertThat(resultado).isNotEmpty();
+        assertThat(resultado.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(repository);
         inOrder.verify(repository).findAll();
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
+    void should_generate_excel_with_only_entradas_when_tipo_is_entrada() {
+        mockUsuario(false);
+
+        List<Transacao> transacoes = List.of(
+                criarTransacao(Categoria.PESSOAL, TipoTransacao.ENTRADA, 200.0),
+                criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 50.0)
+        );
+
+        when(repository.findAll()).thenReturn(transacoes);
+
+        ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, TipoTransacao.ENTRADA);
+
+        assertThat(resultado.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resultado.getBody()).isNotEmpty();
+
+        InOrder inOrder = this.inOrder(repository);
+        inOrder.verify(repository).findAll();
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
+    void should_generate_excel_with_only_saidas_when_tipo_is_saida() {
+        mockUsuario(false);
+
+        List<Transacao> transacoes = List.of(
+                criarTransacao(Categoria.PESSOAL, TipoTransacao.ENTRADA, 200.0),
+                criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 50.0)
+        );
+
+        when(repository.findAll()).thenReturn(transacoes);
+
+        ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, TipoTransacao.SAIDA);
+
+        assertThat(resultado.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resultado.getBody()).isNotEmpty();
+
+        InOrder inOrder = this.inOrder(repository);
+        inOrder.verify(repository).findAll();
+        inOrder.verifyNoMoreInteractions();
+    }
+
+    @Test
+    void should_generate_excel_with_only_entradas_when_modo_mensal_is_enabled_and_tipo_is_entrada() {
+        mockUsuario(true);
+
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
+
+        List<Transacao> transacoes = List.of(
+                criarTransacao(Categoria.PESSOAL, TipoTransacao.ENTRADA, 300.0),
+                criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 100.0)
+        );
+
+        when(transacaoQuery.filtrarPorMes(mes, ano)).thenReturn(transacoes);
+
+        ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, TipoTransacao.ENTRADA);
+
+        assertThat(resultado.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(resultado.getBody()).isNotEmpty();
+
+        InOrder inOrder = this.inOrder(transacaoQuery);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano);
         inOrder.verifyNoMoreInteractions();
     }
 }
