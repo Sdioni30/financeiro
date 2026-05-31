@@ -21,17 +21,9 @@ public class CalcularSaldoCommand {
 
     public Double executar(Categoria categoria) {
         Usuario usuario = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-        List<Transacao> transacoes;
-        if (usuario.isModoMensal()) {
-            int mes = LocalDate.now().getMonthValue();
-            int ano = LocalDate.now().getYear();
-            transacoes = transacaoQuery.filtrarPorMes(mes, ano, usuario.getId());
-        } else {
-            transacoes = transacaoRepository.findByUsuario(usuario);
-        }
-
-        return transacoes.stream()
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
+        return transacaoQuery.filtrarPorMes(mes, ano, usuario.getId()).stream()
                 .filter(t -> t.getCategoria().equals(categoria))
                 .mapToDouble(t -> t.getTipo().equals(TipoTransacao.ENTRADA) ? t.getValor() : -t.getValor())
                 .sum();

@@ -17,19 +17,9 @@ public class ListarTransacoesCommand {
     private final TransacaoRepository transacaoRepository;
 
     public Page<Transacao> executar(Pageable pageable) {
-
-        Usuario usuario = (Usuario) SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getPrincipal();
-
-        if (usuario.isModoMensal()) {
-            int mes = LocalDate.now().getMonthValue();
-            int ano = LocalDate.now().getYear();
-
-            return transacaoRepository.findByMesAndAno(mes, ano, usuario, pageable);
-        }
-
-        return transacaoRepository.findByUsuario(usuario, pageable);
+        Usuario usuario = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
+        return transacaoRepository.findByMesAndAno(mes, ano, usuario, pageable);
     }
 }

@@ -25,26 +25,17 @@ public class ExportarRelatorioCommand {
     private static final MediaType XLSX = MediaType.parseMediaType(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 
-    private final TransacaoRepository repository;
     private final TransacaoQuery transacaoQuery;
 
     public ResponseEntity<byte[]> executar(Categoria categoria, TipoTransacao tipo) {
         Usuario usuario = (Usuario) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-        List<Transacao> transacoes;
-        if (usuario.isModoMensal()) {
-            int mes = LocalDate.now().getMonthValue();
-            int ano = LocalDate.now().getYear();
-            transacoes = transacaoQuery.filtrarPorMes(mes, ano, usuario.getId()).stream()
-                    .filter(t -> t.getCategoria().equals(categoria))
-                    .filter(t -> tipo == null || t.getTipo().equals(tipo))
-                    .toList();
-        } else {
-            transacoes = repository.findByUsuario(usuario).stream()
-                    .filter(t -> t.getCategoria().equals(categoria))
-                    .filter(t -> tipo == null || t.getTipo().equals(tipo))
-                    .toList();
-        }
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
+        List<Transacao> transacoes = transacaoQuery.filtrarPorMes(mes, ano, usuario.getId()).stream()
+                .filter(t -> t.getCategoria().equals(categoria))
+                .filter(t -> tipo == null || t.getTipo().equals(tipo))
+                .toList();
 
         try (Workbook workbook = new XSSFWorkbook();
              ByteArrayOutputStream out = new ByteArrayOutputStream()) {

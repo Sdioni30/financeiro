@@ -35,12 +35,9 @@ class CalcularSaldoCommandTest extends TestSupport {
     @Override
     public void init() {
         calcularSaldoCommand = new CalcularSaldoCommand(transacaoRepository, transacaoQuery);
-    }
 
-    private Usuario mockUsuario(boolean modoMensal) {
         Usuario usuario = new Usuario();
         usuario.setId(1L);
-        usuario.setModoMensal(modoMensal);
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(usuario);
@@ -49,12 +46,12 @@ class CalcularSaldoCommandTest extends TestSupport {
         when(securityContext.getAuthentication()).thenReturn(authentication);
 
         SecurityContextHolder.setContext(securityContext);
-        return usuario;
     }
 
     @Test
-    void should_calculate_correct_balance_when_transactions_exist() {
-        Usuario usuario = mockUsuario(false);
+    void should_calculate_correct_balance_for_current_month() {
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
 
         Transacao t1 = new Transacao();
         t1.setCategoria(Categoria.PROFISSIONAL);
@@ -71,57 +68,30 @@ class CalcularSaldoCommandTest extends TestSupport {
         t3.setTipo(TipoTransacao.ENTRADA);
         t3.setValor(500.0);
 
-        when(transacaoRepository.findByUsuario(usuario)).thenReturn(List.of(t1, t2, t3));
+        when(transacaoQuery.filtrarPorMes(mes, ano, 1L)).thenReturn(List.of(t1, t2, t3));
 
         Double saldoResult = calcularSaldoCommand.executar(Categoria.PROFISSIONAL);
 
         assertThat(saldoResult).isEqualTo(100.0);
 
-        InOrder inOrder = this.inOrder(transacaoRepository);
-        inOrder.verify(transacaoRepository).findByUsuario(usuario);
+        InOrder inOrder = this.inOrder(transacaoQuery);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, 1L);
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
     void should_return_zero_when_no_transactions_found_for_category() {
-        Usuario usuario = mockUsuario(false);
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
 
-        when(transacaoRepository.findByUsuario(usuario)).thenReturn(List.of());
+        when(transacaoQuery.filtrarPorMes(mes, ano, 1L)).thenReturn(List.of());
 
         Double saldoResult = calcularSaldoCommand.executar(Categoria.PESSOAL);
 
         assertThat(saldoResult).isEqualTo(0.0);
 
-        InOrder inOrder = this.inOrder(transacaoRepository);
-        inOrder.verify(transacaoRepository).findByUsuario(usuario);
-        inOrder.verifyNoMoreInteractions();
-    }
-
-    @Test
-    void should_calculate_balance_only_for_current_month_when_modo_mensal_is_enabled() {
-        Usuario usuario = mockUsuario(true);
-
-        int mes = LocalDate.now().getMonthValue();
-        int ano = LocalDate.now().getYear();
-
-        Transacao t1 = new Transacao();
-        t1.setCategoria(Categoria.PROFISSIONAL);
-        t1.setTipo(TipoTransacao.ENTRADA);
-        t1.setValor(400.0);
-
-        Transacao t2 = new Transacao();
-        t2.setCategoria(Categoria.PROFISSIONAL);
-        t2.setTipo(TipoTransacao.SAIDA);
-        t2.setValor(100.0);
-
-        when(transacaoQuery.filtrarPorMes(mes, ano, usuario.getId())).thenReturn(List.of(t1, t2));
-
-        Double saldoResult = calcularSaldoCommand.executar(Categoria.PROFISSIONAL);
-
-        assertThat(saldoResult).isEqualTo(300.0);
-
         InOrder inOrder = this.inOrder(transacaoQuery);
-        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, usuario.getId());
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, 1L);
         inOrder.verifyNoMoreInteractions();
     }
 }
