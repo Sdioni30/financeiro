@@ -1,5 +1,7 @@
 package com.dioni.financeiro.base.web;
 
+import com.dioni.financeiro.base.dto.TransacaoDTO;
+import com.dioni.financeiro.base.dto.TransacaoRequest;
 import com.dioni.financeiro.base.model.Categoria;
 import com.dioni.financeiro.base.repository.CalcularSaldoCommand;
 import com.dioni.financeiro.base.repository.ExportarRelatorioCommand;
@@ -25,9 +27,11 @@ public class TransacaoController {
     private final TransacaoRepository repository;
 
     @PostMapping
-    public Transacao criar(@RequestBody Transacao transacao) {
+    public TransacaoDTO criar(@RequestBody TransacaoRequest transacaoRequest) {
+        Transacao transacao = transacaoRequest.toTransacao();
         transacao.setData(LocalDate.now());
-        return repository.save(transacao);
+        Transacao saveTransaction = repository.save(transacao);
+        return TransacaoDTO.from(saveTransaction);
     }
 
     @GetMapping("/listar")
