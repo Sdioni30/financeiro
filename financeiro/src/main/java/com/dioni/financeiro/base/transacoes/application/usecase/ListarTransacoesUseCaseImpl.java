@@ -27,9 +27,9 @@ public class ListarTransacoesUseCaseImpl implements ListarTransacoesUseCase {
         if (usuario.isModoMensal()) {
             int mes = LocalDate.now().getMonthValue();
             int ano = LocalDate.now().getYear();
-            return repository.findByMesAndAno(mes, ano, pageable);
+            return repository.findByMesAndAno(mes, ano, usuario, pageable);
         }
 
-        return repository.findAll(pageable);
+        return repository.findByUsuario(usuario, pageable);
     }
 }

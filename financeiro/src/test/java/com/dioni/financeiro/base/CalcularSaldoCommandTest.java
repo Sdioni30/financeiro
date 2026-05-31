@@ -37,7 +37,7 @@ class CalcularSaldoCommandTest extends TestSupport {
         calcularSaldoCommand = new CalcularSaldoCommand(transacaoRepository, transacaoQuery);
 
         Usuario usuario = new Usuario();
-        usuario.setModoMensal(false);
+        usuario.setId(1L);
 
         Authentication authentication = mock(Authentication.class);
         when(authentication.getPrincipal()).thenReturn(usuario);
@@ -81,9 +81,10 @@ class CalcularSaldoCommandTest extends TestSupport {
 
     @Test
     void should_return_zero_when_no_transactions_found_for_category() {
-        Categoria categoriaAlvo = Categoria.PESSOAL;
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
 
-        when(transacaoRepository.findAll()).thenReturn(List.of());
+        when(transacaoQuery.filtrarPorMes(mes, ano, 1L)).thenReturn(List.of());
 
         Double saldoResult = calcularSaldoCommand.executar(Categoria.PESSOAL);
 
@@ -91,43 +92,6 @@ class CalcularSaldoCommandTest extends TestSupport {
 
         InOrder inOrder = this.inOrder(transacaoQuery);
         inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, 1L);
-        inOrder.verifyNoMoreInteractions();
-    }
-
-    @Test
-    void should_calculate_balance_only_for_current_month_when_modo_mensal_is_enabled() {
-        Usuario usuarioMensal = new Usuario();
-        usuarioMensal.setModoMensal(true);
-
-        Authentication authentication = mock(Authentication.class);
-        when(authentication.getPrincipal()).thenReturn(usuarioMensal);
-
-        SecurityContext securityContext = mock(SecurityContext.class);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-
-        SecurityContextHolder.setContext(securityContext);
-
-        int mes = java.time.LocalDate.now().getMonthValue();
-        int ano = java.time.LocalDate.now().getYear();
-
-        Transacao t1 = new Transacao();
-        t1.setCategoria(Categoria.PROFISSIONAL);
-        t1.setTipo(TipoTransacao.ENTRADA);
-        t1.setValor(400.0);
-
-        Transacao t2 = new Transacao();
-        t2.setCategoria(Categoria.PROFISSIONAL);
-        t2.setTipo(TipoTransacao.SAIDA);
-        t2.setValor(100.0);
-
-        when(transacaoQuery.filtrarPorMes(mes, ano)).thenReturn(List.of(t1, t2));
-
-        Double saldoResult = calcularSaldoCommand.executar(Categoria.PROFISSIONAL);
-
-        assertThat(saldoResult).isEqualTo(300.0);
-
-        InOrder inOrder = this.inOrder(transacaoQuery);
-        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano);
         inOrder.verifyNoMoreInteractions();
     }
 }
