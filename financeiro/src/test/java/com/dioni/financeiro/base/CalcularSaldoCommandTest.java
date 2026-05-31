@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,8 +49,9 @@ class CalcularSaldoCommandTest extends TestSupport {
     }
 
     @Test
-    void should_calculate_correct_balance_when_transactions_exist() {
-        Categoria categoriaAlvo = Categoria.PROFISSIONAL;
+    void should_calculate_correct_balance_for_current_month() {
+        int mes = LocalDate.now().getMonthValue();
+        int ano = LocalDate.now().getYear();
 
         Transacao t1 = new Transacao();
         t1.setCategoria(Categoria.PROFISSIONAL);
@@ -66,16 +68,14 @@ class CalcularSaldoCommandTest extends TestSupport {
         t3.setTipo(TipoTransacao.ENTRADA);
         t3.setValor(500.0);
 
-        List<Transacao> transacoesMock = List.of(t1, t2, t3);
+        when(transacaoQuery.filtrarPorMes(mes, ano, 1L)).thenReturn(List.of(t1, t2, t3));
 
-        when(transacaoRepository.findAll()).thenReturn(transacoesMock);
-
-        Double saldoResult = calcularSaldoCommand.executar(categoriaAlvo);
+        Double saldoResult = calcularSaldoCommand.executar(Categoria.PROFISSIONAL);
 
         assertThat(saldoResult).isEqualTo(100.0);
 
-        InOrder inOrder = this.inOrder(transacaoRepository);
-        inOrder.verify(transacaoRepository).findAll();
+        InOrder inOrder = this.inOrder(transacaoQuery);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, 1L);
         inOrder.verifyNoMoreInteractions();
     }
 
@@ -85,12 +85,12 @@ class CalcularSaldoCommandTest extends TestSupport {
 
         when(transacaoRepository.findAll()).thenReturn(List.of());
 
-        Double saldoResult = calcularSaldoCommand.executar(categoriaAlvo);
+        Double saldoResult = calcularSaldoCommand.executar(Categoria.PESSOAL);
 
         assertThat(saldoResult).isEqualTo(0.0);
 
-        InOrder inOrder = this.inOrder(transacaoRepository);
-        inOrder.verify(transacaoRepository).findAll();
+        InOrder inOrder = this.inOrder(transacaoQuery);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, 1L);
         inOrder.verifyNoMoreInteractions();
     }
 

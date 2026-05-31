@@ -13,7 +13,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.dioni.financeiro.base.transacoes.repository.TransacaoRepository;
 import com.dioni.financeiro.base.transacoes.model.Transacao;
 
 import java.time.LocalDate;
@@ -32,8 +31,7 @@ public class TransacaoController {
 
     @PostMapping
     public Transacao criar(@RequestBody Transacao transacao) {
-        transacao.setData(LocalDate.now());
-        return repository.save(transacao);
+        return criarTransacaoCommand.executar(transacao);
     }
 
     @GetMapping("/listar")
@@ -48,16 +46,9 @@ public class TransacaoController {
     }
 
     @GetMapping("/download/relatorio/{categoria}")
-    public ResponseEntity<byte[]> baixarRelatorio(@PathVariable Categoria categoria) {
-        byte[] relatorio = exportarRelatorioCommand.executar(categoria);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"));
-        headers.setContentDispositionFormData("attachment", "relatorio_" + categoria + ".xlsx");
-
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(relatorio);
+    public ResponseEntity<byte[]> baixarRelatorio(@PathVariable Categoria categoria,
+                                                  @RequestParam(required = false) TipoTransacao tipo) {
+        return exportarRelatorioCommand.executar(categoria, tipo);
     }
 
     @DeleteMapping("/delete/{id}")

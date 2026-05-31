@@ -5,5 +5,5 @@ import com.dioni.financeiro.base.transacoes.model.Transacao;
 import java.util.List;
 
 public interface TransacaoQuery {
-    List<Transacao> filtrarPorMes(int mes, int ano);
+    List<Transacao> filtrarPorMes(int mes, int ano, Long usuarioId);
 }
