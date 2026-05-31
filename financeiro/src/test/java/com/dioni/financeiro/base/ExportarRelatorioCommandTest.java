@@ -11,12 +11,11 @@ import com.dioni.financeiro.support.TestSupport;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -40,8 +39,9 @@ class ExportarRelatorioCommandTest extends TestSupport {
         exportarRelatorioCommand = new ExportarRelatorioCommand(repository, transacaoQuery);
     }
 
-    private void mockUsuario(boolean modoMensal) {
+    private Usuario mockUsuario(boolean modoMensal) {
         Usuario usuario = new Usuario();
+        usuario.setId(1L);
         usuario.setModoMensal(modoMensal);
 
         Authentication authentication = mock(Authentication.class);
@@ -51,6 +51,7 @@ class ExportarRelatorioCommandTest extends TestSupport {
         when(securityContext.getAuthentication()).thenReturn(authentication);
 
         SecurityContextHolder.setContext(securityContext);
+        return usuario;
     }
 
     private Transacao criarTransacao(Categoria categoria, TipoTransacao tipo, Double valor) {
@@ -65,7 +66,7 @@ class ExportarRelatorioCommandTest extends TestSupport {
 
     @Test
     void should_generate_excel_with_transactions_when_modo_mensal_is_disabled() {
-        mockUsuario(false);
+        Usuario usuario = mockUsuario(false);
 
         List<Transacao> transacoes = List.of(
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.ENTRADA, 200.0),
@@ -73,7 +74,7 @@ class ExportarRelatorioCommandTest extends TestSupport {
                 criarTransacao(Categoria.PROFISSIONAL, TipoTransacao.ENTRADA, 500.0)
         );
 
-        when(repository.findAll()).thenReturn(transacoes);
+        when(repository.findByUsuario(usuario)).thenReturn(transacoes);
 
         ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, null);
 
@@ -81,13 +82,13 @@ class ExportarRelatorioCommandTest extends TestSupport {
         assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(repository);
-        inOrder.verify(repository).findAll();
+        inOrder.verify(repository).findByUsuario(usuario);
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
     void should_generate_excel_with_monthly_transactions_when_modo_mensal_is_enabled() {
-        mockUsuario(true);
+        Usuario usuario = mockUsuario(true);
 
         int mes = LocalDate.now().getMonthValue();
         int ano = LocalDate.now().getYear();
@@ -97,7 +98,7 @@ class ExportarRelatorioCommandTest extends TestSupport {
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 100.0)
         );
 
-        when(transacaoQuery.filtrarPorMes(mes, ano)).thenReturn(transacoes);
+        when(transacaoQuery.filtrarPorMes(mes, ano, usuario.getId())).thenReturn(transacoes);
 
         ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, null);
 
@@ -105,15 +106,15 @@ class ExportarRelatorioCommandTest extends TestSupport {
         assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(transacaoQuery);
-        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, usuario.getId());
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
     void should_return_empty_excel_when_no_transactions_found_for_category() {
-        mockUsuario(false);
+        Usuario usuario = mockUsuario(false);
 
-        when(repository.findAll()).thenReturn(List.of());
+        when(repository.findByUsuario(usuario)).thenReturn(List.of());
 
         ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PROFISSIONAL, null);
 
@@ -121,20 +122,20 @@ class ExportarRelatorioCommandTest extends TestSupport {
         assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(repository);
-        inOrder.verify(repository).findAll();
+        inOrder.verify(repository).findByUsuario(usuario);
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
     void should_generate_excel_with_only_entradas_when_tipo_is_entrada() {
-        mockUsuario(false);
+        Usuario usuario = mockUsuario(false);
 
         List<Transacao> transacoes = List.of(
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.ENTRADA, 200.0),
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 50.0)
         );
 
-        when(repository.findAll()).thenReturn(transacoes);
+        when(repository.findByUsuario(usuario)).thenReturn(transacoes);
 
         ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, TipoTransacao.ENTRADA);
 
@@ -142,20 +143,20 @@ class ExportarRelatorioCommandTest extends TestSupport {
         assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(repository);
-        inOrder.verify(repository).findAll();
+        inOrder.verify(repository).findByUsuario(usuario);
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
     void should_generate_excel_with_only_saidas_when_tipo_is_saida() {
-        mockUsuario(false);
+        Usuario usuario = mockUsuario(false);
 
         List<Transacao> transacoes = List.of(
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.ENTRADA, 200.0),
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 50.0)
         );
 
-        when(repository.findAll()).thenReturn(transacoes);
+        when(repository.findByUsuario(usuario)).thenReturn(transacoes);
 
         ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, TipoTransacao.SAIDA);
 
@@ -163,13 +164,13 @@ class ExportarRelatorioCommandTest extends TestSupport {
         assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(repository);
-        inOrder.verify(repository).findAll();
+        inOrder.verify(repository).findByUsuario(usuario);
         inOrder.verifyNoMoreInteractions();
     }
 
     @Test
     void should_generate_excel_with_only_entradas_when_modo_mensal_is_enabled_and_tipo_is_entrada() {
-        mockUsuario(true);
+        Usuario usuario = mockUsuario(true);
 
         int mes = LocalDate.now().getMonthValue();
         int ano = LocalDate.now().getYear();
@@ -179,7 +180,7 @@ class ExportarRelatorioCommandTest extends TestSupport {
                 criarTransacao(Categoria.PESSOAL, TipoTransacao.SAIDA, 100.0)
         );
 
-        when(transacaoQuery.filtrarPorMes(mes, ano)).thenReturn(transacoes);
+        when(transacaoQuery.filtrarPorMes(mes, ano, usuario.getId())).thenReturn(transacoes);
 
         ResponseEntity<byte[]> resultado = exportarRelatorioCommand.executar(Categoria.PESSOAL, TipoTransacao.ENTRADA);
 
@@ -187,7 +188,7 @@ class ExportarRelatorioCommandTest extends TestSupport {
         assertThat(resultado.getBody()).isNotEmpty();
 
         InOrder inOrder = this.inOrder(transacaoQuery);
-        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano);
+        inOrder.verify(transacaoQuery).filtrarPorMes(mes, ano, usuario.getId());
         inOrder.verifyNoMoreInteractions();
     }
 }

@@ -16,11 +16,11 @@ public class TransacaoQueryImpl implements TransacaoQuery {
     private final QueryExecutor queryExecutor;
 
     @Override
-    public List<Transacao> filtrarPorMes(int mes, int ano) {
+    public List<Transacao> filtrarPorMes(int mes, int ano, Long usuarioId) {
         return queryExecutor.findList(
                 TransacaoQueries.FILTRAR_TRANSACAO_POR_MES,
                 Transacao.class,
-                mes, ano
+                mes, ano, usuarioId
         );
     }
 }

@@ -26,9 +26,9 @@ public class CalcularSaldoCommand {
         if (usuario.isModoMensal()) {
             int mes = LocalDate.now().getMonthValue();
             int ano = LocalDate.now().getYear();
-            transacoes = transacaoQuery.filtrarPorMes(mes, ano);
+            transacoes = transacaoQuery.filtrarPorMes(mes, ano, usuario.getId());
         } else {
-            transacoes = transacaoRepository.findAll();
+            transacoes = transacaoRepository.findByUsuario(usuario);
         }
 
         return transacoes.stream()

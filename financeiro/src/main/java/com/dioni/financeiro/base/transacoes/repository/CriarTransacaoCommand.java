@@ -3,33 +3,36 @@ package com.dioni.financeiro.base.transacoes.repository;
 import com.dioni.financeiro.base.auth.model.Usuario;
 import com.dioni.financeiro.base.transacoes.model.Transacao;
 import lombok.AllArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 @AllArgsConstructor
-public class ListarTransacoesCommand {
+public class CriarTransacaoCommand {
 
     private final TransacaoRepository transacaoRepository;
 
-    public Page<Transacao> executar(Pageable pageable) {
+    public Transacao executar(Transacao transacao) {
 
         Usuario usuario = (Usuario) SecurityContextHolder
                 .getContext()
                 .getAuthentication()
                 .getPrincipal();
 
-        if (usuario.isModoMensal()) {
-            int mes = LocalDate.now().getMonthValue();
-            int ano = LocalDate.now().getYear();
+        transacao.setUsuario(usuario);
+        transacao.setData(LocalDate.now());
 
-            return transacaoRepository.findByMesAndAno(mes, ano, usuario, pageable);
-        }
+        return transacaoRepository.save(transacao);
+    }
 
-        return transacaoRepository.findByUsuario(usuario, pageable);
+    public List<Transacao> transacaoPorUsuario(){
+        Usuario usuario = (Usuario) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return transacaoRepository.findByUsuario(usuario);
     }
 }

@@ -6,8 +6,9 @@ public class TransacaoQueries {
             SELECT * FROM transacao
             WHERE MONTH(data) = ?
             AND YEAR(data) = ?
+            AND usuario_id = ?
             """;
 
     public static final String FILTRAR_TRANSACAO_POR_MES_PAGINADO =
-            "SELECT t FROM Transacao t WHERE MONTH(t.data) = :mes AND YEAR(t.data) = :ano";
+            "SELECT t FROM Transacao t WHERE MONTH(t.data) = :mes AND YEAR(t.data) = :ano AND t.usuario = :usuario";
 }

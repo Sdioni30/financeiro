@@ -35,12 +35,12 @@ public class ExportarRelatorioCommand {
         if (usuario.isModoMensal()) {
             int mes = LocalDate.now().getMonthValue();
             int ano = LocalDate.now().getYear();
-            transacoes = transacaoQuery.filtrarPorMes(mes, ano).stream()
+            transacoes = transacaoQuery.filtrarPorMes(mes, ano, usuario.getId()).stream()
                     .filter(t -> t.getCategoria().equals(categoria))
                     .filter(t -> tipo == null || t.getTipo().equals(tipo))
                     .toList();
         } else {
-            transacoes = repository.findAll().stream()
+            transacoes = repository.findByUsuario(usuario).stream()
                     .filter(t -> t.getCategoria().equals(categoria))
                     .filter(t -> tipo == null || t.getTipo().equals(tipo))
                     .toList();
