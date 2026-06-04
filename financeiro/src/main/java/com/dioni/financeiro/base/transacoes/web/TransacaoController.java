@@ -1,5 +1,7 @@
 package com.dioni.financeiro.base.transacoes.web;
 
+import com.dioni.financeiro.base.dto.TransacaoDTO;
+import com.dioni.financeiro.base.dto.TransacaoRequest;
 import com.dioni.financeiro.base.enums.Categoria;
 import com.dioni.financeiro.base.enums.TipoTransacao;
 import com.dioni.financeiro.base.transacoes.repository.*;
@@ -9,10 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.dioni.financeiro.base.transacoes.model.Transacao;
-
-import java.time.LocalDate;
-
 
 @AllArgsConstructor
 @RestController
@@ -21,20 +19,21 @@ public class TransacaoController {
 
     private final CalcularSaldoCommand calcularSaldoCommand;
     private final ExportarRelatorioCommand exportarRelatorioCommand;
-    private final TransacaoRepository repository;
     private final DeletarTransacaoCommand deletarTransacaoCommand;
     private final ListarTransacoesCommand listarTransacoesCommand;
     private final CriarTransacaoCommand criarTransacaoCommand;
 
     @PostMapping
-    public Transacao criar(@RequestBody Transacao transacao) {
-        return criarTransacaoCommand.executar(transacao);
+    public ResponseEntity<TransacaoDTO> criar(@RequestBody TransacaoRequest request) {
+        return ResponseEntity.ok(criarTransacaoCommand.executar(request));
     }
 
     @GetMapping("/listar")
-    public ResponseEntity<Page<Transacao>> listarTodas(@RequestParam(defaultValue = "0") int page) {
+    public ResponseEntity<Page<TransacaoDTO>> listarTodas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam Categoria categoria) {
         Pageable pageable = PageRequest.of(page, 10);
-        return ResponseEntity.ok(listarTransacoesCommand.executar(pageable));
+        return ResponseEntity.ok(listarTransacoesCommand.executar(pageable, categoria));
     }
 
     @GetMapping("/saldo/{categoria}")
