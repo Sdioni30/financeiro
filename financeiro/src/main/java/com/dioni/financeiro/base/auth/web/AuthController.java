@@ -33,17 +33,20 @@ public class AuthController {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         Usuario usuario = userRepository.findByEmail(request.email()).orElseThrow();
         String token = jwtService.generateToken(usuario);
-        return ResponseEntity.ok(new LoginResponse(token, usuario.isModoMensal()));
+        return ResponseEntity.ok(new LoginResponse(token, usuario.isModoMensal(), usuario.isAssinaturaAtiva()));
     }
     @PostMapping("/api/auth/register")
-    public ResponseEntity<Void> userRegister(@RequestBody RegisterRequest request){
-    Usuario usuario = Usuario.builder()
-            .name(request.name())
-            .email(request.email())
-            .password(passwordEncoder.encode(request.password()))
-            .build();
-    userRepository.save(usuario);
-    return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<Void> userRegister(@RequestBody RegisterRequest request) {
+        if (userRepository.findByEmail(request.email()).isPresent()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).build();
+        }
+        Usuario usuario = Usuario.builder()
+                .name(request.name())
+                .email(request.email())
+                .password(passwordEncoder.encode(request.password()))
+                .build();
+        userRepository.save(usuario);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @PutMapping("/api/auth/modoMensal")
