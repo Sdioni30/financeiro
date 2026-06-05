@@ -1,6 +1,5 @@
 package com.dioni.financeiro.base.security;
 
-import com.dioni.financeiro.base.auth.model.Usuario;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,14 +23,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
-    private final Set<String> contasGratuitas;
+    private final Set<String> contasLiberadas;
 
     public JwtAuthFilter(JwtService jwtService,
                          UserDetailsService userDetailsService,
-                         @Value("${mercadopago.contas-gratuitas:}") String contasGratuitasRaw) {
+                         @Value("${app.contas-liberadas:}") String contasLiberadasRaw) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
-        this.contasGratuitas = Arrays.stream(contasGratuitasRaw.split(","))
+        this.contasLiberadas = Arrays.stream(contasLiberadasRaw.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());
@@ -54,13 +53,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(email);
             if (jwtService.isTokenValid(token, userDetails)) {
-                String path = request.getRequestURI();
-                boolean rotaLivre = path.startsWith("/api/auth/") || path.startsWith("/api/pagamento/");
-                boolean contaGratuita = contasGratuitas.contains(userDetails.getUsername());
-                if (!rotaLivre && !contaGratuita && userDetails instanceof Usuario usuario && !usuario.isAssinaturaAtiva()) {
-                    response.setStatus(402);
+                boolean rotaLivre = request.getRequestURI().startsWith("/api/auth/");
+                boolean contaLiberada = contasLiberadas.contains(userDetails.getUsername());
+                if (!rotaLivre && !contaLiberada) {
+                    response.setStatus(403);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"error\":\"Assinatura inativa ou expirada\"}");
+                    response.getWriter().write("{\"error\":\"Acesso nao autorizado\"}");
                     return;
                 }
                 UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(

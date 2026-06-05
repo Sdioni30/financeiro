@@ -16,11 +16,5 @@ jwt:
 cors:
   allowed-origins: http://localhost
 
-mercadopago:
-  access-token: test-token-stub
-  preco: 9.90
-  return-url: http://localhost/
-  webhook-url: http://localhost/api/pagamento/webhook
-  webhook-secret: test-webhook-secret
-  sandbox: true
-  contas-gratuitas: sdioni30@gmail.com
+app:
+  contas-liberadas: sdioni30@gmail.com

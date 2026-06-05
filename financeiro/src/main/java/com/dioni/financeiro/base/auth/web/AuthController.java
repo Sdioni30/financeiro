@@ -33,7 +33,7 @@ public class AuthController {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         Usuario usuario = userRepository.findByEmail(request.email()).orElseThrow();
         String token = jwtService.generateToken(usuario);
-        return ResponseEntity.ok(new LoginResponse(token, usuario.isModoMensal(), usuario.isAssinaturaAtiva()));
+        return ResponseEntity.ok(new LoginResponse(token, usuario.isModoMensal()));
     }
     @PostMapping("/api/auth/register")
     public ResponseEntity<Void> userRegister(@RequestBody RegisterRequest request) {
