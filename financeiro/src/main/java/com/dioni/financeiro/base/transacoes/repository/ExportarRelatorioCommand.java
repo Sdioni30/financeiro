@@ -43,14 +43,14 @@ public class ExportarRelatorioCommand {
             Sheet sheet = workbook.createSheet("Relatorio");
             Row header = sheet.createRow(0);
             header.createCell(0).setCellValue("Data");
-            header.createCell(1).setCellValue("Tipo");
+            header.createCell(1).setCellValue("Descrição do item");
             header.createCell(2).setCellValue("Valor");
 
             int rowIdx = 1;
             for (Transacao t : transacoes) {
                 Row row = sheet.createRow(rowIdx++);
                 row.createCell(0).setCellValue(t.getData().toString());
-                row.createCell(1).setCellValue(t.getTipo().toString());
+                row.createCell(1).setCellValue(t.getDescricao());
                 row.createCell(2).setCellValue(t.getValor());
             }
 
